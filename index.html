@@ -17,8 +17,6 @@
       --border: #e8e8e4;
       --text-primary: #1a1a1a;
       --text-secondary: #888880;
-      --accent: #2563eb;
-      --accent-light: #eff6ff;
       --active-bg: #1a1a1a;
       --active-text: #ffffff;
       --font-display: 'Syne', sans-serif;
@@ -34,7 +32,6 @@
       font-family: var(--font-mono);
     }
 
-    /* ── Sidebar ── */
     #sidebar {
       width: 220px;
       min-width: 220px;
@@ -42,8 +39,6 @@
       border-right: 1px solid var(--border);
       display: flex;
       flex-direction: column;
-      padding: 0;
-      overflow: hidden;
     }
 
     .sidebar-header {
@@ -89,13 +84,8 @@
       transition: background 0.15s ease;
     }
 
-    .struct-btn:hover {
-      background: var(--border);
-    }
-
-    .struct-btn.active {
-      background: var(--active-bg);
-    }
+    .struct-btn:hover { background: var(--border); }
+    .struct-btn.active { background: var(--active-bg); }
 
     .struct-btn .btn-label {
       font-family: var(--font-display);
@@ -105,9 +95,7 @@
       transition: color 0.15s;
     }
 
-    .struct-btn.active .btn-label {
-      color: var(--active-text);
-    }
+    .struct-btn.active .btn-label { color: var(--active-text); }
 
     .struct-btn .btn-sub {
       font-family: var(--font-mono);
@@ -117,9 +105,7 @@
       transition: color 0.15s;
     }
 
-    .struct-btn.active .btn-sub {
-      color: #aaa;
-    }
+    .struct-btn.active .btn-sub { color: #aaa; }
 
     .sidebar-footer {
       padding: 16px 20px;
@@ -133,7 +119,6 @@
       letter-spacing: 0.02em;
     }
 
-    /* ── Viewer area ── */
     #viewer-wrapper {
       flex: 1;
       position: relative;
@@ -147,7 +132,6 @@
       inset: 0;
     }
 
-    /* Loading overlay */
     #loading {
       position: absolute;
       inset: 0;
@@ -184,9 +168,7 @@
       letter-spacing: 0.06em;
     }
 
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
+    @keyframes spin { to { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
@@ -198,15 +180,15 @@
     </div>
 
     <div class="structure-list">
-      <button class="struct-btn active" onclick="load('structures/todo(238).pdb', this)" data-label="Combined">
+      <button class="struct-btn active" onclick="load('structures/todo%28238%29.pdb', this)">
         <span class="btn-label">Combined</span>
         <span class="btn-sub">todo(238).pdb</span>
       </button>
-      <button class="struct-btn" onclick="load('structures/7xaqmAF.pdb', this)" data-label="7XAQ">
+      <button class="struct-btn" onclick="load('structures/7xaqmAF.pdb', this)">
         <span class="btn-label">7XAQ</span>
         <span class="btn-sub">7xaqmAF.pdb</span>
       </button>
-      <button class="struct-btn" onclick="load('structures/238_mmff94s_e_132.35_out.pdb', this)" data-label="Structure 2">
+      <button class="struct-btn" onclick="load('structures/238_mmff94s_e_132.35_out.pdb', this)">
         <span class="btn-label">Structure 2</span>
         <span class="btn-sub">238_mmff94s…pdb</span>
       </button>
@@ -229,10 +211,8 @@
   <script>
     let molstarViewer = null;
     let currentBtn = document.querySelector('.struct-btn.active');
-
     const loading = document.getElementById('loading');
 
-    // Initialize Mol* viewer
     molstar.Viewer.create('viewer', {
       layoutIsExpanded: false,
       layoutShowControls: false,
@@ -244,37 +224,25 @@
       viewportShowSelectionMode: false,
       canvas3d: {
         renderer: {
-          backgroundColor: 0xffffff,   // white background
-          ambientIntensity: 0.4,
-          lightIntensity: 0.8,
-        },
-        postprocessing: {
-          occlusion: { name: 'on', params: { bias: 0.8, radius: 6, samples: 32, blurSize: 3 } },
-          outline: { name: 'on', params: { scale: 1, threshold: 0.15, color: 0x000000 } },
+          backgroundColor: 0xffffff
         }
       }
     }).then(viewer => {
       molstarViewer = viewer;
-      load('structures/todo(238).pdb', currentBtn);
+      load('structures/todo%28238%29.pdb', currentBtn);
     });
 
     async function load(path, btn) {
       if (!molstarViewer) return;
 
-      // Update active button
       document.querySelectorAll('.struct-btn').forEach(b => b.classList.remove('active'));
       if (btn) { btn.classList.add('active'); currentBtn = btn; }
 
-      // Show loading
       loading.classList.add('visible');
 
       try {
-        await molstarViewer.clear();
-        await molstarViewer.loadStructureFromUrl(path, 'pdb', false, {
-          representationParams: {
-            theme: { globalName: 'element-symbol' }
-          }
-        });
+        await molstarViewer.plugin.clear();
+        await molstarViewer.loadStructureFromUrl(path, 'pdb');
       } catch(e) {
         console.error('Failed to load structure:', e);
       } finally {
