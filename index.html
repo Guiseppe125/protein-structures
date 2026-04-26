@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <script src="https://3Dmol.org/build/3Dmol-min.js"></script>
+  <style>
+    body { display: flex; margin: 0; background: #111; color: white; font-family: monospace; }
+    #sidebar { width: 200px; padding: 20px; border-right: 1px solid #333; }
+    #sidebar button { display: block; width: 100%; margin: 6px 0; padding: 8px;
+                      background: #222; color: white; border: 1px solid #444;
+                      cursor: pointer; }
+    #sidebar button:hover { background: #00bfff; color: black; }
+    #viewer { flex: 1; height: 100vh; position: relative; }
+  </style>
+</head>
+<body>
+  <div id="sidebar">
+    <h3>Structures</h3>
+    <button onclick="load('structures/7xaq.pdb')">7XAQ</button>
+    <button onclick="load('structures/structure2.pdb')">Structure 2</button>
+    <!-- add more here -->
+  </div>
+  <div id="viewer"></div>
+
+  <script>
+    let viewer = $3Dmol.createViewer("viewer", { backgroundColor: "black" });
+
+    function load(path) {
+      viewer.clear();
+      fetch(path)
+        .then(r => r.text())
+        .then(data => {
+          viewer.addModel(data, "pdb");
+          viewer.setStyle({ hetflag: false }, { cartoon: { color: "grey" } });
+          viewer.setStyle({ hetflag: true }, { stick: { color: "yellow", radius: 0.15 } });
+          viewer.zoomTo();
+          viewer.render();
+        });
+    }
+
+    load('structures/7xaq.pdb'); // load first one on startup
+  </script>
+</body>
+</html>
