@@ -1,44 +1,287 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <script src="https://3Dmol.org/build/3Dmol-min.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Protein Structures</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Syne:wght@400;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/molstar/build/viewer/molstar.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/molstar/build/viewer/molstar.css">
   <style>
-    body { display: flex; margin: 0; background: #111; color: white; font-family: monospace; }
-    #sidebar { width: 200px; padding: 20px; border-right: 1px solid #333; }
-    #sidebar button { display: block; width: 100%; margin: 6px 0; padding: 8px;
-                      background: #222; color: white; border: 1px solid #444;
-                      cursor: pointer; }
-    #sidebar button:hover { background: #00bfff; color: black; }
-    #viewer { flex: 1; height: 100vh; position: relative; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #ffffff;
+      --sidebar-bg: #f8f8f6;
+      --border: #e8e8e4;
+      --text-primary: #1a1a1a;
+      --text-secondary: #888880;
+      --accent: #2563eb;
+      --accent-light: #eff6ff;
+      --active-bg: #1a1a1a;
+      --active-text: #ffffff;
+      --font-display: 'Syne', sans-serif;
+      --font-mono: 'DM Mono', monospace;
+    }
+
+    body {
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--text-primary);
+      font-family: var(--font-mono);
+    }
+
+    /* ── Sidebar ── */
+    #sidebar {
+      width: 220px;
+      min-width: 220px;
+      background: var(--sidebar-bg);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      padding: 0;
+      overflow: hidden;
+    }
+
+    .sidebar-header {
+      padding: 28px 20px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .sidebar-header h1 {
+      font-family: var(--font-display);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-primary);
+    }
+
+    .sidebar-header p {
+      font-size: 10px;
+      color: var(--text-secondary);
+      margin-top: 4px;
+      letter-spacing: 0.04em;
+    }
+
+    .structure-list {
+      padding: 12px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      flex: 1;
+    }
+
+    .struct-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      width: 100%;
+      padding: 10px 12px;
+      background: transparent;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      text-align: left;
+      transition: background 0.15s ease;
+    }
+
+    .struct-btn:hover {
+      background: var(--border);
+    }
+
+    .struct-btn.active {
+      background: var(--active-bg);
+    }
+
+    .struct-btn .btn-label {
+      font-family: var(--font-display);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-primary);
+      transition: color 0.15s;
+    }
+
+    .struct-btn.active .btn-label {
+      color: var(--active-text);
+    }
+
+    .struct-btn .btn-sub {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      color: var(--text-secondary);
+      margin-top: 2px;
+      transition: color 0.15s;
+    }
+
+    .struct-btn.active .btn-sub {
+      color: #aaa;
+    }
+
+    .sidebar-footer {
+      padding: 16px 20px;
+      border-top: 1px solid var(--border);
+    }
+
+    .sidebar-footer p {
+      font-size: 9px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      letter-spacing: 0.02em;
+    }
+
+    /* ── Viewer area ── */
+    #viewer-wrapper {
+      flex: 1;
+      position: relative;
+      background: #ffffff;
+    }
+
+    #viewer {
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      inset: 0;
+    }
+
+    /* Loading overlay */
+    #loading {
+      position: absolute;
+      inset: 0;
+      background: rgba(255,255,255,0.85);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+    }
+
+    #loading.visible {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .spinner {
+      width: 32px;
+      height: 32px;
+      border: 2px solid var(--border);
+      border-top-color: var(--text-primary);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    .loading-text {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-secondary);
+      margin-top: 14px;
+      letter-spacing: 0.06em;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
   </style>
 </head>
 <body>
+
   <div id="sidebar">
-    <h3>Structures</h3>
-    <button onclick="load('structures/todo(238).pdb')">Combined</button>
-    <button onclick="load('structures/7xaqmAF.pdb')">7XAQ</button>
-    <button onclick="load('structures/238_mmff94s_e_132.35_out.pdb')">Structure 2</button>
-    <!-- add more here -->
+    <div class="sidebar-header">
+      <h1>Structures</h1>
+      <p>Interactive 3D viewer</p>
+    </div>
+
+    <div class="structure-list">
+      <button class="struct-btn active" onclick="load('structures/todo(238).pdb', this)" data-label="Combined">
+        <span class="btn-label">Combined</span>
+        <span class="btn-sub">todo(238).pdb</span>
+      </button>
+      <button class="struct-btn" onclick="load('structures/7xaqmAF.pdb', this)" data-label="7XAQ">
+        <span class="btn-label">7XAQ</span>
+        <span class="btn-sub">7xaqmAF.pdb</span>
+      </button>
+      <button class="struct-btn" onclick="load('structures/238_mmff94s_e_132.35_out.pdb', this)" data-label="Structure 2">
+        <span class="btn-label">Structure 2</span>
+        <span class="btn-sub">238_mmff94s…pdb</span>
+      </button>
+      <!-- Add more buttons here following the same pattern -->
+    </div>
+
+    <div class="sidebar-footer">
+      <p>Drag to rotate · Scroll to zoom · Right-click to pan</p>
+    </div>
   </div>
-  <div id="viewer"></div>
+
+  <div id="viewer-wrapper">
+    <div id="viewer"></div>
+    <div id="loading">
+      <div class="spinner"></div>
+      <p class="loading-text">Loading structure…</p>
+    </div>
+  </div>
 
   <script>
-    let viewer = $3Dmol.createViewer("viewer", { backgroundColor: "black" });
+    let molstarViewer = null;
+    let currentBtn = document.querySelector('.struct-btn.active');
 
-    function load(path) {
-      viewer.clear();
-      fetch(path)
-        .then(r => r.text())
-        .then(data => {
-          viewer.addModel(data, "pdb");
-          viewer.setStyle({ hetflag: false }, { cartoon: { color: "grey" } });
-          viewer.setStyle({ hetflag: true }, { stick: { color: "yellow", radius: 0.15 } });
-          viewer.zoomTo();
-          viewer.render();
+    const loading = document.getElementById('loading');
+
+    // Initialize Mol* viewer
+    molstar.Viewer.create('viewer', {
+      layoutIsExpanded: false,
+      layoutShowControls: false,
+      layoutShowRemoteState: false,
+      layoutShowSequence: true,
+      layoutShowLog: false,
+      layoutShowLeftPanel: false,
+      viewportShowExpand: true,
+      viewportShowSelectionMode: false,
+      canvas3d: {
+        renderer: {
+          backgroundColor: 0xffffff,   // white background
+          ambientIntensity: 0.4,
+          lightIntensity: 0.8,
+        },
+        postprocessing: {
+          occlusion: { name: 'on', params: { bias: 0.8, radius: 6, samples: 32, blurSize: 3 } },
+          outline: { name: 'on', params: { scale: 1, threshold: 0.15, color: 0x000000 } },
+        }
+      }
+    }).then(viewer => {
+      molstarViewer = viewer;
+      load('structures/todo(238).pdb', currentBtn);
+    });
+
+    async function load(path, btn) {
+      if (!molstarViewer) return;
+
+      // Update active button
+      document.querySelectorAll('.struct-btn').forEach(b => b.classList.remove('active'));
+      if (btn) { btn.classList.add('active'); currentBtn = btn; }
+
+      // Show loading
+      loading.classList.add('visible');
+
+      try {
+        await molstarViewer.clear();
+        await molstarViewer.loadStructureFromUrl(path, 'pdb', false, {
+          representationParams: {
+            theme: { globalName: 'element-symbol' }
+          }
         });
+      } catch(e) {
+        console.error('Failed to load structure:', e);
+      } finally {
+        loading.classList.remove('visible');
+      }
     }
-
-    load('structures/todo(238).pdb'); // load first one on startup
   </script>
+
 </body>
 </html>
