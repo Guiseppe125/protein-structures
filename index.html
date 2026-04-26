@@ -17,8 +17,6 @@
       --border: #e8e8e4;
       --text-primary: #1a1a1a;
       --text-secondary: #888880;
-      --active-bg: #1a1a1a;
-      --active-text: #ffffff;
       --font-display: 'Syne', sans-serif;
       --font-mono: 'DM Mono', monospace;
     }
@@ -52,7 +50,6 @@
       font-weight: 700;
       letter-spacing: 0.12em;
       text-transform: uppercase;
-      color: var(--text-primary);
     }
 
     .sidebar-header p {
@@ -62,50 +59,45 @@
       letter-spacing: 0.04em;
     }
 
-    .structure-list {
-      padding: 12px 10px;
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
+    .sidebar-info {
+      padding: 20px;
       flex: 1;
-    }
-
-    .struct-btn {
       display: flex;
       flex-direction: column;
-      align-items: flex-start;
-      width: 100%;
-      padding: 10px 12px;
-      background: transparent;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      text-align: left;
-      transition: background 0.15s ease;
+      gap: 16px;
     }
 
-    .struct-btn:hover { background: var(--border); }
-    .struct-btn.active { background: var(--active-bg); }
+    .info-block {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 14px;
+    }
 
-    .struct-btn .btn-label {
+    .info-block .label {
       font-family: var(--font-display);
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--text-primary);
-      transition: color 0.15s;
-    }
-
-    .struct-btn.active .btn-label { color: var(--active-text); }
-
-    .struct-btn .btn-sub {
-      font-family: var(--font-mono);
-      font-size: 9px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
       color: var(--text-secondary);
-      margin-top: 2px;
-      transition: color 0.15s;
+      margin-bottom: 6px;
     }
 
-    .struct-btn.active .btn-sub { color: #aaa; }
+    .info-block .value {
+      font-size: 11px;
+      color: var(--text-primary);
+      line-height: 1.6;
+    }
+
+    .dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-right: 6px;
+      vertical-align: middle;
+    }
 
     .sidebar-footer {
       padding: 16px 20px;
@@ -115,7 +107,7 @@
     .sidebar-footer p {
       font-size: 9px;
       color: var(--text-secondary);
-      line-height: 1.6;
+      line-height: 1.8;
       letter-spacing: 0.02em;
     }
 
@@ -135,20 +127,19 @@
     #loading {
       position: absolute;
       inset: 0;
-      background: rgba(255,255,255,0.85);
+      background: rgba(255,255,255,0.9);
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       z-index: 10;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.2s;
+      opacity: 1;
+      transition: opacity 0.3s;
     }
 
-    #loading.visible {
-      opacity: 1;
-      pointer-events: all;
+    #loading.hidden {
+      opacity: 0;
+      pointer-events: none;
     }
 
     .spinner {
@@ -175,28 +166,36 @@
 
   <div id="sidebar">
     <div class="sidebar-header">
-      <h1>Structures</h1>
+      <h1>Docking Result</h1>
       <p>Interactive 3D viewer</p>
     </div>
 
-    <div class="structure-list">
-      <button class="struct-btn active" onclick="load('structures/todo%28238%29.pdb', this)">
-        <span class="btn-label">Combined</span>
-        <span class="btn-sub">todo(238).pdb</span>
-      </button>
-      <button class="struct-btn" onclick="load('structures/7xaqmAF.pdb', this)">
-        <span class="btn-label">7XAQ</span>
-        <span class="btn-sub">7xaqmAF.pdb</span>
-      </button>
-      <button class="struct-btn" onclick="load('structures/238_mmff94s_e_132.35_out.pdb', this)">
-        <span class="btn-label">Structure 2</span>
-        <span class="btn-sub">238_mmff94s…pdb</span>
-      </button>
-      <!-- Add more buttons here following the same pattern -->
+    <div class="sidebar-info">
+      <div class="info-block">
+        <div class="label">Loaded structures</div>
+        <div class="value">
+          <span class="dot" style="background:#4a90d9"></span>7XAQ receptor<br>
+          <span class="dot" style="background:#e8a838"></span>Docked ligand
+        </div>
+      </div>
+
+      <div class="info-block">
+        <div class="label">Ligand</div>
+        <div class="value">238_mmff94s<br>Energy: −132.35</div>
+      </div>
+
+      <div class="info-block">
+        <div class="label">Source</div>
+        <div class="value">PyMOL export<br>Docking / concursos</div>
+      </div>
     </div>
 
     <div class="sidebar-footer">
-      <p>Drag to rotate · Scroll to zoom · Right-click to pan</p>
+      <p>
+        Drag → rotate<br>
+        Scroll → zoom<br>
+        Right-click → pan
+      </p>
     </div>
   </div>
 
@@ -204,20 +203,18 @@
     <div id="viewer"></div>
     <div id="loading">
       <div class="spinner"></div>
-      <p class="loading-text">Loading structure…</p>
+      <p class="loading-text">Loading structures…</p>
     </div>
   </div>
 
   <script>
-    let molstarViewer = null;
-    let currentBtn = document.querySelector('.struct-btn.active');
     const loading = document.getElementById('loading');
 
     molstar.Viewer.create('viewer', {
       layoutIsExpanded: false,
       layoutShowControls: false,
       layoutShowRemoteState: false,
-      layoutShowSequence: true,
+      layoutShowSequence: false,
       layoutShowLog: false,
       layoutShowLeftPanel: false,
       viewportShowExpand: true,
@@ -227,28 +224,27 @@
           backgroundColor: 0xffffff
         }
       }
-    }).then(viewer => {
-      molstarViewer = viewer;
-      load('structures/todo%28238%29.pdb', currentBtn);
+    }).then(async viewer => {
+
+      // Load receptor
+      await viewer.loadStructureFromUrl(
+        'structures/7xaqmAF.pdb',
+        'pdb'
+      );
+
+      // Load ligand — adds to the same scene, no clear() in between
+      await viewer.loadStructureFromUrl(
+        'structures/238_mmff94s_e_132.35_out.pdb',
+        'pdb'
+      );
+
+      // Hide loading overlay
+      loading.classList.add('hidden');
+
+    }).catch(e => {
+      console.error('Failed to load structures:', e);
+      loading.classList.add('hidden');
     });
-
-    async function load(path, btn) {
-      if (!molstarViewer) return;
-
-      document.querySelectorAll('.struct-btn').forEach(b => b.classList.remove('active'));
-      if (btn) { btn.classList.add('active'); currentBtn = btn; }
-
-      loading.classList.add('visible');
-
-      try {
-        await molstarViewer.plugin.clear();
-        await molstarViewer.loadStructureFromUrl(path, 'pdb');
-      } catch(e) {
-        console.error('Failed to load structure:', e);
-      } finally {
-        loading.classList.remove('visible');
-      }
-    }
   </script>
 
 </body>
