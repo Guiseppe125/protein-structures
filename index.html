@@ -30,6 +30,11 @@
       font-family: var(--font-mono);
     }
 
+    /* When embedded as iframe, sidebar is hidden via JS adding this class to body */
+    body.embedded #sidebar {
+      display: none;
+    }
+
     #sidebar {
       width: 220px;
       min-width: 220px;
@@ -178,12 +183,10 @@
           <span class="dot" style="background:#e8a838"></span>Docked ligand
         </div>
       </div>
-
       <div class="info-block">
         <div class="label">Ligand</div>
         <div class="value">238_mmff94s<br>Energy: −132.35</div>
       </div>
-
       <div class="info-block">
         <div class="label">Source</div>
         <div class="value">PyMOL export<br>Docking / concursos</div>
@@ -208,6 +211,11 @@
   </div>
 
   <script>
+    // Detect if running inside an iframe — if so, hide the sidebar
+    if (window.self !== window.top) {
+      document.body.classList.add('embedded');
+    }
+
     const loading = document.getElementById('loading');
 
     molstar.Viewer.create('viewer', {
@@ -226,19 +234,16 @@
       }
     }).then(async viewer => {
 
-      // Load receptor
       await viewer.loadStructureFromUrl(
         'structures/7xaqmAF.pdb',
         'pdb'
       );
 
-      // Load ligand — adds to the same scene, no clear() in between
       await viewer.loadStructureFromUrl(
         'structures/238_mmff94s_e_132.35_out.pdb',
         'pdb'
       );
 
-      // Hide loading overlay
       loading.classList.add('hidden');
 
     }).catch(e => {
