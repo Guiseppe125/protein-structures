@@ -24,7 +24,6 @@
   <div id="viewer"></div>
 
   <script>
-    // Crear visor sin UI
     const viewer = new molstar.Viewer('viewer', {
       layoutIsExpanded: false,
       layoutShowControls: false,
@@ -39,19 +38,23 @@
       showSettings: false
     });
 
-    // Cargar tu archivo local desde GitHub Pages
-    viewer.loadStructureFromUrl(
-      'structures/7xaqmAF.pdb',
-      'pdb',
-      {
+    async function loadPDB() {
+      // 1. Descargar el archivo PDB como texto
+      const response = await fetch('structures/7xaqmAF.pdb');
+      const pdbText = await response.text();
+
+      // 2. Cargarlo en Mol*
+      await viewer.loadStructureFromData(pdbText, 'pdb', {
         representationParams: {
           type: 'cartoon',
           theme: {
             globalColor: { name: 'uniform', params: { value: 0x33AAFF } }
           }
         }
-      }
-    );
+      });
+    }
+
+    loadPDB();
   </script>
 </body>
 </html>
