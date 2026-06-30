@@ -16,7 +16,6 @@
     }
   </style>
 
-  <!-- Mol* Viewer -->
   <script src="https://unpkg.com/molstar/build/viewer/molstar.js"></script>
 </head>
 
@@ -24,37 +23,41 @@
   <div id="viewer"></div>
 
   <script>
-    const viewer = new molstar.Viewer('viewer', {
-      layoutIsExpanded: false,
-      layoutShowControls: false,
-      layoutShowRemoteState: false,
-      layoutShowSequence: false,
-      layoutShowLog: false,
-      layoutShowLeftPanel: false,
-      viewportShowExpand: false,
-      viewportShowSelectionMode: false,
-      viewportShowAnimation: false,
-      showControls: false,
-      showSettings: false
-    });
+    async function init() {
+      const viewer = new molstar.Viewer('viewer', {
+        layoutIsExpanded: false,
+        layoutShowControls: false,
+        layoutShowRemoteState: false,
+        layoutShowSequence: false,
+        layoutShowLog: false,
+        layoutShowLeftPanel: false,
+        viewportShowExpand: false,
+        viewportShowSelectionMode: false,
+        viewportShowAnimation: false,
+        showControls: false,
+        showSettings: false
+      });
 
-    async function loadPDB() {
       // 1. Descargar el archivo PDB como texto
       const response = await fetch('structures/7xaqmAF.pdb');
       const pdbText = await response.text();
 
-      // 2. Cargarlo en Mol*
-      await viewer.loadStructureFromData(pdbText, 'pdb', {
-        representationParams: {
-          type: 'cartoon',
-          theme: {
-            globalColor: { name: 'uniform', params: { value: 0x33AAFF } }
-          }
-        }
+      // 2. Convertir el texto a Blob
+      const pdbBlob = new Blob([pdbText], { type: 'text/plain' });
+
+      // 3. Cargarlo en Mol*
+      const data = await viewer.plugin.builders.data.rawData({
+        data: pdbBlob,
+        label: '7XAQ'
       });
+
+      const trajectory = await viewer.plugin.builders.structure.parseTrajectory(data, 'pdb');
+
+      // 4. Representación cartoon
+      await viewer.plugin.builders.structure.representation.applyPreset(trajectory, 'default');
     }
 
-    loadPDB();
+    init();
   </script>
 </body>
 </html>
